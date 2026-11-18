@@ -1,0 +1,21 @@
+{
+  "name": "kitchen-display",
+  "version": "1.0.0",
+  "description": "Crumb & Co.'s kitchen screen: today's bake list, built from orders-api.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}

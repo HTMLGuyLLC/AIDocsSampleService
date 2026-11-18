@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run check:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run eval:*)",
+      "Bash(node --test:*)",
+      "Bash(node .claude/skills/pos-lookup/scripts/pos-lookup.mjs --fake:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "ask": [
+      "Bash(npm install:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(bash scripts/load-secrets.sh:*)",
+      "Edit(./.claude/settings.json)",
+      "Edit(./.mcp.json)",
+      "Edit(./.github/workflows/**)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}

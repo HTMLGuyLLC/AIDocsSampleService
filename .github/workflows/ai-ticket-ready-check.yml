@@ -1,0 +1,33 @@
+# Pipeline step 1: when an issue is opened, an agent checks it has what's needed and comments with questions.
+# Off by default. To turn it on: add the ANTHROPIC_API_KEY secret and set the repository variable AI_PIPELINE to "on".
+# See docs/ai-pipeline.md.
+name: AI ticket ready check
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  ready-check:
+    if: vars.AI_PIPELINE == 'on'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run the ticket ready check in .claude/skills/ticket-ready-check/SKILL.md
+            for issue #${{ github.event.issue.number }} in ${{ github.repository }}.
+            Read the issue with `gh issue view`. Post your one comment with `gh issue comment`.
+          claude_args: |
+            --model claude-opus-5-5
+            --allowedTools "Read,Glob,Grep,Bash(gh issue view:*),Bash(gh issue comment:*)"

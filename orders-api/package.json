@@ -1,0 +1,23 @@
+{
+  "name": "orders-api",
+  "version": "1.0.0",
+  "description": "Crumb & Co.'s ordering API: orders, billing, notifications and AI-read order notes.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "dev": "node --watch src/main.ts",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
+    "eval": "node scripts/eval-order-notes.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}
