@@ -38,6 +38,7 @@ The current checks need no secrets at all.
 - Each connector or tool an agent uses has **its own least-privilege credential**: read-only where reading is enough ([connectors.md](connectors.md)).
 - **Never lend an agent a person's token.** If the agent misbehaves, you can turn off its token without locking out a person.
 - Rotate on a schedule, and right away if one leaks.
+- The same goes for the product: **each AI feature gets its own model-provider API key** (for example `orders-api-order-notes-ai-key`), so one leaked or abused key can be revoked without taking down the rest ([ai-safety-and-cost.md](ai-safety-and-cost.md)).
 
 ## Ask a person first
 

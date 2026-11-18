@@ -10,6 +10,8 @@ Company rules for any feature that calls a model. The working example is `orders
   A call that fails or times out **keeps its reservation**, because it may still have been billed. (`guard.ts`)
 - **Have a total spend cap** as well as the daily one, set at the provider (and in code if you can). Alert before you reach it. The sample implements the daily budget only; a total cap works the same way.
 - **Have a kill switch.** One flag turns every model call off, and the feature falls back to normal code.
+- **One API key per feature.** Each AI feature (order notes, an assistant, an import job) gets its own provider key from the vault ([secrets.md](secrets.md)).
+  If a key leaks or one feature runs up costs, revoke that key and only that feature falls back. The provider's console also shows spend per key.
 - **Show spend on a dashboard.** `GET /admin/ai-usage` in orders-api returns totals by feature and model.
 - **Use prompt caching** for the big parts of a prompt that repeat (system prompt, long instructions, reference text).
 - **Send only the context that is relevant** (search for the right few passages, don't paste the whole database). Smaller prompts are cheaper, faster and less confusing.

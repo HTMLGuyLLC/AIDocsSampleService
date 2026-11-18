@@ -13,15 +13,24 @@ Our rule: **the model never decides money, status or access.** Example: [orders-
 
 - Free-text order notes ("no nuts please, pickup Saturday 9am, it's for a birthday")
 - Sorting a pile of customer emails (complaint, question, order change)
-- Mapping the messy columns of a supplier spreadsheet to our fields
+- Pulling details out of a scanned invoice or a one-off PDF
 
 Rules there are too many or too fuzzy to write by hand.
 
 ## Option 3: use AI to write the code, once
 
-Sometimes the input is messy but the **job repeats the same way**. Don't call a model for every row. Ask an agent to write a normal
-function or script for it, test it on real examples, and run that. You pay for the AI once, and then it is fast, free and predictable.
-Example: a one-off converter for a supplier's spreadsheet format.
+Sometimes the input is messy but the **job repeats the same way**. Don't call a model for every row. Have AI write the rules once,
+check them on real examples, and run them as normal code. Bring AI back only when the input changes.
+
+Example: importing a supplier's spreadsheet.
+
+1. A new file format arrives. AI studies it and writes **mapping rules** (which column is the SKU, the price, the date format).
+2. A person checks the rules against a few real files, and they're saved with the code.
+3. Normal code applies the rules to every file. No model, no per-row cost, same answer every time.
+4. Validation checks every file against the rules. When the supplier changes their format, validation fails, and AI writes an
+   updated mapping for a person to check. Then it goes quiet again.
+
+You pay for AI **once per format change, not once per row**.
 
 ## The middle ground
 
@@ -43,6 +52,6 @@ Example: a one-off converter for a supplier's spreadsheet format.
 |---|---|
 | There is one right answer you can write as a rule | Normal code |
 | The input is messy text, and a wrong answer is cheap to fix | A model, with validation and a fallback |
-| The input is messy but the job repeats the same way | Have AI write the code once |
+| The input is messy but the job repeats the same way | Have AI write the rules once; rerun it only when the format changes |
 | High volume, simple labels, or private data | A decision table, classic ML, or a small model |
 | A wrong answer costs money or trust | Normal code, or a model that only *proposes* and a person confirms |
