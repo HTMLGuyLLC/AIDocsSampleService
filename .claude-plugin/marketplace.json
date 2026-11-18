@@ -1,0 +1,12 @@
+{
+  "name": "crumb-co-workspace",
+  "owner": { "name": "Crumb & Co." },
+  "metadata": { "description": "Skills and plugins for the Crumb & Co. workspace." },
+  "plugins": [
+    {
+      "name": "crumb-dev",
+      "source": "./plugins/crumb-dev",
+      "description": "Crumb & Co. developer skills: ticket ready check."
+    }
+  ]
+}

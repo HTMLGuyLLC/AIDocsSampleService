@@ -28,6 +28,8 @@ export interface Order {
   /** The customer's free-text note, as typed. Kitchen information only: it never changes the price. */
   note?: string;
   noteDetails?: NoteDetails;
+  /** The official pickup time, ISO 8601 UTC. Set only by a person, or by confirming a proposal. Never read from a note directly. */
+  pickupAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,10 +46,12 @@ interface Deps {
   notifier: Notifier;
   /** Reads customer notes. Without it, a note is stored as typed with no details. */
   orderNotes?: OrderNotes;
+  /** Called after a note is stored and read. May only make proposals; it cannot change the order. A failure here never fails the note. */
+  onNoteRead?: (order: Order) => void;
   now?: () => Date;
 }
 
-export function createOrders({ billing, notifier, orderNotes, now = () => new Date() }: Deps) {
+export function createOrders({ billing, notifier, orderNotes, onNoteRead, now = () => new Date() }: Deps) {
   const orders = new Map<string, Order>();
   let next = 1;
 
@@ -116,9 +120,27 @@ export function createOrders({ billing, notifier, orderNotes, now = () => new Da
       const order = find(id);
       if (order.status !== 'pending') throw conflict(`Notes can only be added to pending orders; this one is ${order.status}`);
 
-      const details = orderNotes ? await orderNotes.parseNote(note, { orderId: order.id }) : undefined;
+      const details = orderNotes ? await orderNotes.parseNote(note, { orderId: order.id, customerEmail: order.customerEmail }) : undefined;
       order.note = note;
       if (details) order.noteDetails = details;
+      order.updatedAt = now().toISOString();
+      if (onNoteRead) {
+        try {
+          onNoteRead(structuredClone(order));
+        } catch (err) {
+          log('warn', 'note follow-up skipped', { orderId: order.id, error: err instanceof Error ? err.message : String(err) });
+        }
+      }
+      return structuredClone(order);
+    },
+
+    /** Sets or clears the official pickup time. Used by the proposals service when a person confirms or undoes. Not for AI code. */
+    setPickupAt(id: string, pickupAt: string | null): Order {
+      const order = find(id);
+      if (order.status === 'refunded') throw conflict('Refunded orders have no pickup');
+      if (pickupAt !== null && (typeof pickupAt !== 'string' || Number.isNaN(Date.parse(pickupAt)))) throw badRequest('pickupAt must be an ISO 8601 date and time');
+      if (pickupAt === null) delete order.pickupAt;
+      else order.pickupAt = pickupAt;
       order.updatedAt = now().toISOString();
       return structuredClone(order);
     },

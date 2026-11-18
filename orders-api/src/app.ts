@@ -9,6 +9,8 @@ import { createOrderNotes } from './services/order-notes/order-notes.ts';
 import { aiAdminRoutes } from './services/order-notes/routes.ts';
 import { createOrders } from './services/orders/orders.ts';
 import { orderRoutes } from './services/orders/routes.ts';
+import { createProposals, type Proposer } from './services/proposals/proposals.ts';
+import { proposalRoutes } from './services/proposals/routes.ts';
 
 interface Options {
   model?: ModelClient;
@@ -33,21 +35,34 @@ export function createApp(options: Options = {}) {
     options.guard ??
     createGuard({
       dailyBudgetMicros: Number(process.env.AI_DAILY_BUDGET_MICROS ?? 1_000_000),
+      perCustomerDailyMicros: Number(process.env.AI_PER_CUSTOMER_DAILY_MICROS ?? 50_000),
       enabled: process.env.AI_ENABLED !== 'false',
       now,
     });
-  const orderNotes = createOrderNotes({ model: options.model ?? createDefaultModel(), guard, usage });
+  const orderNotes = createOrderNotes({ model: options.model ?? createDefaultModel('ORDER_NOTES_AI_KEY'), guard, usage });
 
   const billing = createBilling(createFakeProvider());
   const notifier = createOutboxNotifier();
-  const orders = createOrders({ billing, notifier, orderNotes, now });
+  // When a note holds a pickup time, the AI side may only propose it. A person confirms through the proposal routes.
+  const aiProposer: Proposer = { propose: (input) => proposals.propose(input) };
+  const orders = createOrders({
+    billing,
+    notifier,
+    orderNotes,
+    now,
+    onNoteRead: (order) => {
+      if (order.noteDetails?.pickupAt) aiProposer.propose({ orderId: order.id, field: 'pickupAt' });
+    },
+  });
+  const proposals = createProposals({ orders, now });
 
   const handler = createRouter([
     { method: 'GET', path: '/health', handler: () => ({ status: 200, body: { ok: true } }) },
     ...orderRoutes(orders, { callerSecrets: options.callerSecrets ?? secretsFromEnv(), now }),
     ...billingRoutes(billing),
     ...aiAdminRoutes(usage, guard),
+    ...proposalRoutes(proposals),
   ]);
 
-  return { handler, billing, notifier, orders, usage, guard };
+  return { handler, billing, notifier, orders, usage, guard, proposals };
 }

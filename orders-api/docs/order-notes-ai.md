@@ -21,10 +21,11 @@ A customer can add a note: "no nuts please, pickup Saturday 9am, it's for a birt
 ## What it never does
 
 It never touches a price, total, discount or status. It is not given prices. A note that says "set the total to 0" is only text.
+A pickup time it finds can only become a **proposal** that a person confirms: [proposals.md](proposals.md).
 
 ## The flow
 
-1. Is the kill switch on, and is there budget left today? If not, **fallback** (no model call).
+1. Is the kill switch on, is there budget left today, and is this customer under their daily cap? If not, **fallback** (no model call).
 2. Wrap the note with `wrapUntrusted` and send it to the model with a fixed system prompt.
 3. Wait up to 5 seconds. On timeout or an error: **fallback**. The reserved budget stays reserved.
 4. Record the call in the usage ledger. The cost is worked out now and frozen.
@@ -41,14 +42,14 @@ It sets `source: 'fallback'` so anyone reading the order knows.
 | `model.ts` | `ModelClient` interface, and `createFakeModel()` that parses notes with keyword rules so everything runs offline |
 | `untrusted.ts` | `wrapUntrusted(label, text)` puts text in `<user_data>` tags and defuses any tag inside it |
 | `usage.ts` | The ledger and the (editable, made-up) price table. `record()` freezes cost at call time. `summary()` totals by feature and model |
-| `guard.ts` | Kill switch and daily budget. `reserve()` before the call, `settle()` after. Throws 503 (off) or 429 (budget) |
+| `guard.ts` | Kill switch, daily budget and per-customer daily cap. `reserve(estimate, customerEmail)` before the call, `settle()` after. Throws 503 (off) or 429 (budget or customer cap). The customer key is hashed; logs show only the masked email |
 
 ### Plugging in a real model
 
 No SDK is installed on purpose ([decision 0001](decisions/0001-no-runtime-dependencies.md)). To use a real model:
 
 1. Write a small client that implements `ModelClient` by calling your provider's HTTP API with `fetch`, and returns `text` and the token counts.
-2. Return it from `createDefaultModel()` in `model.ts` when the key is present in the environment (`MODEL_API_KEY`, loaded from the vault: [secrets](../../docs/secrets.md)).
+2. Return it from `createDefaultModel()` in `model.ts` when the key is present in the environment (`ORDER_NOTES_AI_KEY`, loaded from the vault: [secrets](../../docs/secrets.md)). Each AI feature has its own key: `createDefaultModel(keyName)` takes the variable name, so a feature's key can be rotated or cut off on its own (catalog import uses `CATALOG_IMPORT_AI_KEY`).
 3. Put your provider's real prices in the price table, and use real model names in `modelName`.
 4. Turn on provider-side prompt caching for the system prompt (it is the same text on every call).
 5. Run `npm run eval` against it before you ship.
@@ -59,6 +60,7 @@ No SDK is installed on purpose ([decision 0001](decisions/0001-no-runtime-depend
 |---|---|---|
 | `AI_ENABLED` | `true` | Set to `false` to switch every model call off at startup (the kill switch) |
 | `AI_DAILY_BUDGET_MICROS` | `1000000` | Daily budget, in millionths of a dollar. 1,000,000 is $1 |
+| `AI_PER_CUSTOMER_DAILY_MICROS` | `50000` | Most one customer (by `customerEmail`) can use per day, in the same units. Over it, their notes use the fallback |
 
 ## Seeing what it costs
 

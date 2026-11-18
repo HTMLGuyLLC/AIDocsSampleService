@@ -45,6 +45,14 @@ Add to `<project>/docs/runbooks/<topic>.md`:
 - The cause
 - **What would have found this faster** (a log field, a dashboard, a check, a doc). Then add that thing if it's small.
 
+## More moves
+
+- **It used to work?** Find the change with `git bisect run`. Write the failing test first (step 4), then:
+  `git bisect start <bad> <good>` and `git bisect run npm test -- <the test file>`. Reset with `git bisect reset`.
+- **Lots of log lines?** Don't read them. Write a throwaway script that slices them (count by a field, filter, compare).
+  In orders-api: `node scripts/log-slice.mjs <file.jsonl> <groupField> [field=value]`.
+- **Need a number from monitoring?** Use the Dynatrace connector, not screenshots of dashboards.
+
 ## Don't
 
 - Don't run production actions (refunds, retries, data changes). Read and summarize; a person acts.

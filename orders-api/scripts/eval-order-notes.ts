@@ -1,7 +1,7 @@
 /**
  * Runs the order-note cases against the note reader and prints a pass/fail table.
  * Usage: npm run eval            (add --strict to exit 1 when a case fails)
- * Uses the model from createDefaultModel() (the offline fake unless you plug in a real client),
+ * Uses the model from createDefaultModel('ORDER_NOTES_AI_KEY') (the offline fake unless you plug in a real client),
  * and also runs each case through the keyword fallback so you can compare the two paths.
  * Docs: docs/order-notes-ai.md
  */
@@ -24,7 +24,7 @@ const cases = JSON.parse(readFileSync(new URL('../evals/order-notes.cases.json',
 
 const usage = createUsageLedger();
 const guard = createGuard({ dailyBudgetMicros: 10_000_000 });
-const notes = createOrderNotes({ model: createDefaultModel(), guard, usage, log: silentLog });
+const notes = createOrderNotes({ model: createDefaultModel('ORDER_NOTES_AI_KEY'), guard, usage, log: silentLog });
 
 const same = (got: NoteFields, want: NoteFields) =>
   [...got.allergies].sort().join(',') === [...want.allergies].sort().join(',') &&

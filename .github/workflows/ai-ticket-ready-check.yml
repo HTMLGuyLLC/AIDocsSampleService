@@ -9,7 +9,7 @@ on:
 
 jobs:
   ready-check:
-    if: vars.AI_PIPELINE == 'on'
+    if: vars.AI_PIPELINE == 'on' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: read

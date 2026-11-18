@@ -14,7 +14,10 @@
     "test": "node --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm test",
-    "eval": "node scripts/eval-order-notes.ts"
+    "eval": "node scripts/eval-order-notes.ts",
+    "smoke": "node scripts/smoke.ts",
+    "import": "node scripts/import-catalog.ts",
+    "map:supplier": "node scripts/map-supplier.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

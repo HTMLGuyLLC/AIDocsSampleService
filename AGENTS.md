@@ -17,10 +17,10 @@ When a request is vague ("fix the discount bug", "the screen is wrong"), find th
 
 | If the request mentions | Go to |
 |---|---|
-| orders, checkout, refunds, payments, discounts, order notes, the AI feature, customer emails | `orders-api/` |
+| orders, checkout, refunds, payments, discounts, order notes, the AI feature, customer emails, pickup-time proposals, supplier imports | `orders-api/` |
 | bake list, kitchen, prep, screen, allergy flags | `kitchen-display/` |
 | connectors, MCP, secrets, logging, auth, Dynatrace, prompts, models, AI cost or safety | `docs/` (index below) |
-| a repeatable workflow (ticket, release notes, debugging, review loop) | `.claude/skills/` |
+| a repeatable workflow (ticket, release notes, debugging, review loop, PR comments, post-deploy check) | `.claude/skills/` |
 
 Still unsure? Say which projects you looked at and ask. Don't guess.
 
@@ -53,13 +53,25 @@ The `update-docs` skill does this check on request.
 
 ## Models
 
-Default to Opus at low effort. Hand simple, mechanical work to Sonnet or Haiku subagents, then have Opus check what they did.
-See `docs/model-selection.md`.
+- Default: Opus, low effort.
+- Use Sonnet or Haiku for simple or mechanical work where it fits.
+- Have Opus check their work before you call it done.
+- Raise effort only for hard problems.
+
+Details: `docs/model-selection.md`.
 
 ## Loops
 
 Every loop needs a **measurable goal** and a **hard limit**. "Fix until clean" has neither.
-Use the `audit-loop` skill, which has both.
+Use the `audit-loop` or `pr-feedback-loop` skill, which have both.
+
+## How much to trust it
+
+| Kind of change | Examples | What it has to pass |
+|---|---|---|
+| Easy to undo, small impact | Copy, a test, a small bug fix | Let it run. CI and one reviewer. |
+| Core behavior | Money, statuses, API shapes | Approve the plan first. Careful review. |
+| Can't be undone | Production data, infrastructure, secrets | A person does it. AI helps plan. |
 
 ## Ask a person first (all projects)
 

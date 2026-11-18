@@ -3,5 +3,5 @@
 #
 # In this sample, orders-api and kitchen-display live inside this repo, so the script skips them.
 # In your company's workspace repo they'd be separate repos, listed just like this:
-orders-api       git@github.com:crumb-co/orders-api.git
-kitchen-display  git@github.com:crumb-co/kitchen-display.git
+orders-api       git@github.com:your-org/orders-api.git
+kitchen-display  git@github.com:your-org/kitchen-display.git

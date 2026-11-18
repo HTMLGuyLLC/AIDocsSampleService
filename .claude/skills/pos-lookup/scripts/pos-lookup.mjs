@@ -2,6 +2,7 @@
 // Looks up data in Crumb & Co.'s point-of-sale (POS) system and prints a short JSON summary.
 // Usage:  node pos-lookup.mjs [--fake] sales [YYYY-MM-DD]
 //         node pos-lookup.mjs [--fake] item <SKU>
+//         node pos-lookup.mjs [--fake] order <number>
 // Needs POS_API_URL and POS_API_KEY in the environment (see docs/secrets.md). The key is never printed.
 // --fake returns canned data, so this runs offline with no key. The POS API here is fictional.
 
@@ -20,10 +21,20 @@ const FAKE = {
     ],
   },
   item: { sku: 'SOUR-LOAF', name: 'Sourdough loaf', priceCents: 850, onHand: 12 },
+  order: {
+    number: 1042,
+    placedAt: '2026-11-16T09:14:00Z',
+    status: 'paid',
+    lines: [
+      { sku: 'SOUR-LOAF', quantity: 2, lineTotalCents: 1700 },
+      { sku: 'COOKIE', quantity: 2, lineTotalCents: 550 },
+    ],
+    totalCents: 2250,
+  },
 };
 
 function usage() {
-  console.error('Usage: pos-lookup.mjs [--fake] sales [YYYY-MM-DD] | item <SKU>');
+  console.error('Usage: pos-lookup.mjs [--fake] sales [YYYY-MM-DD] | item <SKU> | order <number>');
   process.exit(2);
 }
 
@@ -62,6 +73,17 @@ if (command === 'sales') {
   if (!arg || !/^[A-Z0-9-]+$/.test(arg)) usage();
   const data = fake ? FAKE.item : await get(`/v1/items/${arg}`);
   result = { sku: data.sku, name: data.name, priceCents: data.priceCents, onHand: data.onHand };
+} else if (command === 'order') {
+  if (!arg || !/^\d{1,10}$/.test(arg)) usage();
+  const data = fake ? FAKE.order : await get(`/v1/orders/${arg}`);
+  // No customer name, email or phone: the summary never carries them.
+  result = {
+    number: data.number,
+    placedAt: data.placedAt,
+    status: data.status,
+    lines: data.lines.map(({ sku, quantity, lineTotalCents }) => ({ sku, quantity, lineTotalCents })),
+    totalCents: data.totalCents,
+  };
 } else {
   usage();
 }

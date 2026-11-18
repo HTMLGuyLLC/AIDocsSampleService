@@ -2,7 +2,7 @@ import type { Guard } from '../../lib/ai/guard.ts';
 import type { ModelClient } from '../../lib/ai/model.ts';
 import { UNTRUSTED_RULE, wrapUntrusted } from '../../lib/ai/untrusted.ts';
 import type { UsageLedger } from '../../lib/ai/usage.ts';
-import { log as defaultLog, type Logger } from '../../lib/log.ts';
+import { log as defaultLog, maskEmail, type Logger } from '../../lib/log.ts';
 import { parseNoteFallback } from './fallback.ts';
 import type { NoteDetails } from './types.ts';
 import { parseModelAnswer } from './validate.ts';
@@ -48,9 +48,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
  */
 export function createOrderNotes({ model, guard, usage, modelName = 'small-model', timeoutMs = 5000, log = defaultLog }: Deps) {
   return {
-    async parseNote(note: string, context: { orderId?: string; requestId?: string } = {}): Promise<NoteDetails> {
+    /** `customerEmail` is the per-customer cap key. It is hashed by the guard and only ever logged masked. */
+    async parseNote(note: string, context: { orderId?: string; requestId?: string; customerEmail?: string } = {}): Promise<NoteDetails> {
       const fallback = (reason: string): NoteDetails => {
-        log('warn', 'order note parsed by fallback', { ...context, reason });
+        const { customerEmail, ...ids } = context;
+        log('warn', 'order note parsed by fallback', { ...ids, ...(customerEmail ? { customerEmail: maskEmail(customerEmail) } : {}), reason });
         return { ...parseNoteFallback(note), source: 'fallback' };
       };
 
@@ -63,7 +65,7 @@ export function createOrderNotes({ model, guard, usage, modelName = 'small-model
 
       let reservation;
       try {
-        reservation = guard.reserve(estimate);
+        reservation = guard.reserve(estimate, context.customerEmail);
       } catch (err) {
         return fallback(err instanceof Error ? err.message : 'blocked');
       }

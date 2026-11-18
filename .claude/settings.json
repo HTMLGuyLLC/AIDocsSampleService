@@ -7,6 +7,8 @@
       "Bash(npm run typecheck:*)",
       "Bash(npm run test:*)",
       "Bash(npm run eval:*)",
+      "Bash(npm run smoke:*)",
+      "Bash(npm run import:*)",
       "Bash(node --test:*)",
       "Bash(node .claude/skills/pos-lookup/scripts/pos-lookup.mjs --fake:*)",
       "Bash(git status)",
@@ -15,6 +17,7 @@
     ],
     "ask": [
       "Bash(npm install:*)",
+      "Bash(npm run map:supplier:*)",
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(bash scripts/load-secrets.sh:*)",

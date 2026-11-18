@@ -11,8 +11,8 @@ import { createOrderNotes } from './order-notes.ts';
 
 const now = () => new Date('2026-01-01T12:00:00Z');
 
-function setup(model: ModelClient = createFakeModel(), { budget = 10_000_000, enabled = true, timeoutMs = 50 } = {}) {
-  const guard = createGuard({ dailyBudgetMicros: budget, enabled, now });
+function setup(model: ModelClient = createFakeModel(), { budget = 10_000_000, perCustomer = Infinity, enabled = true, timeoutMs = 50 } = {}) {
+  const guard = createGuard({ dailyBudgetMicros: budget, perCustomerDailyMicros: perCustomer, enabled, now });
   const usage = createUsageLedger({ now });
   const notes = createOrderNotes({ model, guard, usage, timeoutMs, log: silentLog });
   return { notes, guard, usage };
@@ -116,4 +116,36 @@ test('cost is frozen at call time: changing prices later does not change past ro
   const rows = usage.rows();
   assert.equal(rows[0]?.costMicros, before);
   assert.ok((rows[1]?.costMicros ?? 0) > (before ?? 0) * 10);
+});
+
+test('a customer over their daily cap gets the fallback with no model call, and others still get the model', async () => {
+  const model = createFakeModel();
+  const { notes } = setup(model, { perCustomer: 1300 });
+  const first = await notes.parseNote('no nuts please', { customerEmail: 'sam@example.com' });
+  assert.equal(first.source, 'ai');
+  const second = await notes.parseNote('no nuts please', { customerEmail: 'sam@example.com' });
+  assert.equal(second.source, 'fallback');
+  assert.deepEqual(second.allergies, ['nuts']);
+  assert.equal(model.calls.length, 1);
+  const other = await notes.parseNote('no nuts please', { customerEmail: 'pat@example.com' });
+  assert.equal(other.source, 'ai');
+  assert.equal(model.calls.length, 2);
+});
+
+test('the overall daily budget used up means no model call, even for a customer under their cap', async () => {
+  const model = createFakeModel();
+  const { notes } = setup(model, { budget: 1, perCustomer: 1_000_000 });
+  const details = await notes.parseNote('no nuts please', { customerEmail: 'sam@example.com' });
+  assert.equal(details.source, 'fallback');
+  assert.equal(model.calls.length, 0);
+});
+
+test('the fallback log shows a masked email, never the full one', async () => {
+  const lines: string[] = [];
+  const guard = createGuard({ dailyBudgetMicros: 1, now });
+  const notes = createOrderNotes({ model: createFakeModel(), guard, usage: createUsageLedger({ now }), log: (_l, _m, f) => lines.push(JSON.stringify(f)) });
+  await notes.parseNote('no nuts', { customerEmail: 'sam@example.com' });
+  assert.equal(lines.length, 1);
+  assert.ok(!lines[0]?.includes('sam@example.com'));
+  assert.ok(lines[0]?.includes('s***@example.com'));
 });

@@ -45,8 +45,45 @@ function noteFrom(prompt: string): string {
   return /<user_data name="[^"]*">\n([\s\S]*?)\n<\/user_data>/.exec(prompt)?.[1] ?? prompt;
 }
 
+const MAPPING_LABEL = 'supplier_csv_sample';
+
+/** Splits one CSV line. Quotes are honored. Only used to read the header row for the fake. */
+function csvCells(line: string): string[] {
+  const cells: string[] = [];
+  let cell = '';
+  let quoted = false;
+  for (const ch of line) {
+    if (ch === '"') quoted = !quoted;
+    else if (ch === ',' && !quoted) {
+      cells.push(cell.trim());
+      cell = '';
+    } else cell += ch;
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+/** Maps supplier CSV headers to our fields by simple name matching. */
+function fakeMapping(prompt: string): string {
+  const sample = new RegExp(`<user_data name="${MAPPING_LABEL}">\\n([\\s\\S]*?)\\n</user_data>`).exec(prompt)?.[1] ?? '';
+  const headers = csvCells(sample.split('\n')[0] ?? '');
+  const used = new Set<string>();
+  const pick = (pattern: RegExp): string | null => {
+    const found = headers.find((h) => !used.has(h) && pattern.test(h.toLowerCase())) ?? null;
+    if (found) used.add(found);
+    return found;
+  };
+  return JSON.stringify({
+    sku: pick(/sku|code|item\s*(no|number|id)|part/),
+    name: pick(/name|desc|title|product/),
+    price: pick(/price|cost|amount/),
+    priceFormat: 'dollars',
+  });
+}
+
 /** Simple keyword rules that stand in for a model. Only good enough to make the sample run offline. */
 function fakeAnswer(prompt: string): string {
+  if (prompt.includes(`<user_data name="${MAPPING_LABEL}">`)) return fakeMapping(prompt);
   const note = noteFrom(prompt).toLowerCase();
   const allergies = new Set<string>();
   for (const clause of note.split(/[,.;!]/)) {
@@ -84,7 +121,13 @@ export function createFakeModel(): ModelClient & { calls: ModelRequest[] } {
   };
 }
 
-/** The model the app and the evals use. Returns the fake unless you plug in a real client here. */
-export function createDefaultModel(): ModelClient {
+/**
+ * The model a feature uses. Returns the fake unless you plug in a real client here.
+ * `keyName` is the environment variable that holds THIS feature's API key (e.g. `ORDER_NOTES_AI_KEY`).
+ * One key per feature, so each can be cut off or have its spend read on its own. The fake ignores it.
+ * A real client reads `process.env[keyName]` here and never accepts a key from anywhere else.
+ */
+export function createDefaultModel(keyName: string): ModelClient {
+  void keyName;
   return createFakeModel();
 }

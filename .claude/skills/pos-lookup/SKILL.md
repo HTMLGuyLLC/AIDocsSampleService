@@ -1,6 +1,6 @@
 ---
 name: pos-lookup
-description: Look up sales or item data in Crumb & Co.'s point-of-sale (POS) system. Use when asked what sold today, how much of an item sold, or for the POS price or stock of a sku.
+description: Look up an order in the point-of-sale system by order number. Also looks up a day's sales or an item's price and stock. Use when asked about a POS order, what sold today, how much of an item sold, or the POS price or stock of a sku.
 ---
 
 # POS lookup
@@ -13,10 +13,11 @@ any tool without a connector: a script that does one job, a skill that says when
 ```bash
 node .claude/skills/pos-lookup/scripts/pos-lookup.mjs sales 2026-11-16   # sales summary for a day (default: today)
 node .claude/skills/pos-lookup/scripts/pos-lookup.mjs item SOUR-LOAF     # price and stock for a sku
+node .claude/skills/pos-lookup/scripts/pos-lookup.mjs order 1042         # one order: status, lines, total
 node .claude/skills/pos-lookup/scripts/pos-lookup.mjs --fake sales       # canned data, no network, no key
 ```
 
-It prints one line of JSON: totals and top items, in cents. Read that. Don't ask for the raw API response.
+It prints one line of JSON, money in cents. Read that. Don't ask for the raw API response.
 
 ## Rules
 

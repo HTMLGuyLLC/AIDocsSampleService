@@ -1,0 +1,9 @@
+{
+  "supplier": "acme-flour",
+  "headers": ["Item Code", "Description", "Unit Price (USD)", "Pack Size"],
+  "fields": {
+    "sku": { "header": "Item Code" },
+    "name": { "header": "Description" },
+    "price": { "header": "Unit Price (USD)", "format": "dollars" }
+  }
+}

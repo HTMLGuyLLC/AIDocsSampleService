@@ -10,7 +10,7 @@ on:
 
 jobs:
   review:
-    if: vars.AI_PIPELINE == 'on' && github.event.pull_request.draft == false
+    if: vars.AI_PIPELINE == 'on' && github.event.pull_request.draft == false && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: read

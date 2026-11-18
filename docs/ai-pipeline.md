@@ -15,7 +15,7 @@ Ticket → Ready check → Plan → Code → Review → Deploy → Test
 | Code | Agent | Builds with tests and docs on a branch, opens a PR | skill `ticket-to-pr` |
 | Review | A **separate** agent, plus CI | Checks the diff against the rules and docs; CI runs `npm run check` | `.github/workflows/ai-pr-review.yml`, `ci.yml` |
 | Deploy | **A person approves** | Merge and release | your deploy process |
-| Test | Agent | Checks the live change: smoke tests, logs and Dynatrace for new errors | skill `debug-with-evidence` for anything it finds |
+| Test | Agent | Runs the smoke test, then compares errors before and after in Dynatrace. Recommends, never rolls back | `.github/workflows/ai-post-deploy-check.yml`, skill `post-deploy-check`, `npm run smoke` in `orders-api/`. Skill `debug-with-evidence` for anything it finds |
 
 ## Gates by size and risk
 
@@ -40,3 +40,4 @@ Start with the ready check alone. It only comments, so it can't break anything. 
 - Agents get only the GitHub commands their step needs (see `--allowedTools` in each workflow).
 - No agent approves, merges or deploys. People do.
 - Fork PRs don't get secrets on public repos, so reviews only run on branches in this repo.
+- If the repo is public, agents only run for issues and PRs from an owner, member or collaborator (`author_association`), so a stranger can't spend your API budget.

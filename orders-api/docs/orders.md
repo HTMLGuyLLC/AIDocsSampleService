@@ -29,6 +29,7 @@ Anything else is a `409 conflict`. Statuses never move backwards.
 | `paymentId` | Set when paid. Points to a billing payment |
 | `note` | Optional free text from the customer, up to 500 characters, as typed |
 | `noteDetails` | What [order-notes](order-notes-ai.md) read from the note: `allergies[]`, `pickupAt`, `occasion`, and `source` (`ai` or `fallback`). Kitchen information only |
+| `pickupAt` | Official pickup time, ISO 8601 UTC. Set only by confirming a [proposal](proposals.md) or by staff. Never read straight from a note |
 | `createdAt`, `updatedAt` | ISO 8601 UTC |
 
 ## API
@@ -39,6 +40,10 @@ Anything else is a `409 conflict`. Statuses never move backwards.
 | `POST` | `/orders` | 201, the new order. Accepts an optional `note` | 400 bad input or bad note |
 | `GET` | `/internal/orders` | 200, list of orders. **Signed requests only** ([auth](../../docs/auth.md)) | 401 |
 | `GET` | `/admin/ai-usage` | 200, AI usage totals ([order-notes-ai.md](order-notes-ai.md)) | |
+| `GET` | `/proposals/:id` | 200, the proposal with its before and after ([proposals.md](proposals.md)) | 404 |
+| `POST` | `/proposals/:id/confirm` | 200, the confirmed proposal. Needs the `x-staff-user` header | 400 no staff user, 404, 409 expired, used, or order changed |
+| `POST` | `/proposals/:id/undo` | 200, the undone proposal. Needs `x-staff-user` | 400, 404, 409 not confirmed, over 24 hours, or field changed since |
+| `GET` | `/admin/audit` | 200, audit entries (who, what, before, after, when) | |
 | `GET` | `/orders/:id` | 200, the order | 404 |
 | `POST` | `/orders/:id/pay` | 200, the paid order | 404, 409 not pending |
 | `POST` | `/orders/:id/refund` | 200, the refunded order | 404, 409 not paid |
@@ -62,4 +67,5 @@ curl -X POST localhost:3000/orders -d '{"customerEmail":"sam@example.com","items
 
 - [billing.md](billing.md) for how charges and refunds work
 - [order-notes-ai.md](order-notes-ai.md) for how notes are read
+- [proposals.md](proposals.md) for how a pickup time from a note becomes official
 - [decisions/0002-money-in-cents.md](decisions/0002-money-in-cents.md)

@@ -6,6 +6,12 @@
 - `src/app.test.ts` starts the real server on a random port and calls it over HTTP. Add a case there
   when you add or change a route.
 
+## Smoke test
+
+`npm run smoke` checks a running service: health, create an order with a note, pay it, fetch the payment, totals in cents.
+`BASE_URL` sets the target (default `http://localhost:3000`). Exit code 1 means a check failed. It creates and pays a real order, so use dev or staging, never prod.
+`src/smoke.test.ts` runs it against the app in `npm test`. The `post-deploy-check` skill runs it after a deploy.
+
 ## Writing a good test
 
 - Build services with fakes: `createFakeProvider()`, `createOutboxNotifier()`, and a fixed `now`.

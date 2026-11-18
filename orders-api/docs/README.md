@@ -9,6 +9,8 @@ Written for people and AI agents alike. Each file answers one question. Company-
 | [billing.md](billing.md) | You change charges, refunds or the payment provider |
 | [notifications.md](notifications.md) | You change customer emails |
 | [order-notes-ai.md](order-notes-ai.md) | You change how customer notes are read, or anything that calls a model |
+| [proposals.md](proposals.md) | You change what AI output is allowed to lead to (propose, confirm, undo, audit) |
+| [catalog-import.md](catalog-import.md) | You import a supplier price list, or a supplier's file changed |
 | [dynatrace.md](dynatrace.md) | You look at this service in monitoring, or chase a production problem |
 | [testing.md](testing.md) | You write or fix tests |
 | [glossary.md](glossary.md) | A word means something specific here |

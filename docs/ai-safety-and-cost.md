@@ -1,43 +1,35 @@
 # AI features: safety and cost
 
-Company rules for any feature that calls a model. The working example is `orders-api/src/lib/ai/` and `orders-api/src/services/order-notes/`.
+Rules for any feature that calls a model. Working examples: `orders-api/src/lib/ai/`, `orders-api/src/services/order-notes/`,
+`orders-api/src/services/proposals/`, `orders-api/src/services/catalog-import/`.
 
-## Cost: know it, cap it, be able to stop it
+## Cost
 
-- **Record every model call:** the model, the feature, input tokens, output tokens, cache-read tokens, and the **cost, frozen at call time**
-  from a price table. Changing prices later must not rewrite old rows. (`usage.ts`)
-- **Reserve the daily budget before the call.** Set money aside first, call the model, then replace the reservation with the real cost.
-  A call that fails or times out **keeps its reservation**, because it may still have been billed. (`guard.ts`)
-- **Have a total spend cap** as well as the daily one, set at the provider (and in code if you can). Alert before you reach it. The sample implements the daily budget only; a total cap works the same way.
-- **Have a kill switch.** One flag turns every model call off, and the feature falls back to normal code.
-- **One API key per feature.** Each AI feature (order notes, an assistant, an import job) gets its own provider key from the vault ([secrets.md](secrets.md)).
-  If a key leaks or one feature runs up costs, revoke that key and only that feature falls back. The provider's console also shows spend per key.
-- **Show spend on a dashboard.** `GET /admin/ai-usage` in orders-api returns totals by feature and model.
-- **Use prompt caching** for the big parts of a prompt that repeat (system prompt, long instructions, reference text).
-- **Send only the context that is relevant** (search for the right few passages, don't paste the whole database). Smaller prompts are cheaper, faster and less confusing.
+- **Record every call:** model, feature, customer, input/output/cache tokens, and cost **frozen at call time** from the price table (`usage.ts`).
+- **Reserve before the call:** a daily cap per customer and overall. A failed or timed-out call keeps its reservation (`guard.ts`).
+- **Total spend cap** at the provider, with an alert before you reach it.
+- **Kill switch:** one flag turns every model call off; features fall back to normal code.
+- **One API key per feature** (`ORDER_NOTES_AI_KEY`, `CATALOG_IMPORT_AI_KEY`), from the vault ([secrets.md](secrets.md)). Revoke one without touching the rest.
+- **Dashboard:** `GET /admin/ai-usage` in orders-api, totals by feature and model.
+- Cache big repeated prompt parts. Send only the relevant context.
 
-## Safety: the model is not trusted
+## Safety
 
-- **Treat anything from outside as untrusted:** customer text, database rows, uploaded files, web pages, tool results.
-  Wrap it as data (`wrapUntrusted`) and tell the model, in the system prompt, that text in the wrapper is never instructions.
-  Wrapping reduces the risk. It doesn't remove it, so design as if a note could say anything.
-- **The model proposes, a person confirms writes.** Anything that changes data, sends a message or moves money needs a person's yes, or doesn't use a model at all.
-- **Scope tools to the user.** If the model can call tools, they run as the signed-in user and can only reach what that user can.
-- **Cap tool steps.** A model that can loop will loop. Set a maximum number of steps per request.
-- **Validate the output** by hand, strictly. Wrong shape or limits means reject and fall back. ([ai-in-products.md](ai-in-products.md))
-- **Never put secrets in a prompt**, and never log whole prompts that hold customer text ([logging.md](logging.md)).
+- Outside text (customer input, database rows, files, web pages, tool results) is **data, never instructions**. Wrap it (`wrapUntrusted`).
+- **The model proposes, a person confirms** any write (`proposals/`). Every confirmed change is logged and can be undone for 24 hours.
+- Tools run as the signed-in user and reach only their data. Cap tool steps per request.
+- Validate model output strictly. Wrong shape means reject and fall back.
+- No secrets in prompts. Don't log whole prompts that hold customer text ([logging.md](logging.md)).
 
-## Quality: evals before changing anything
+## Evals
 
-- Keep a small file of real examples with the expected answers (`orders-api/evals/`).
-- **Run it before and after** you change a prompt or a model. Compare. Don't ship a change that makes it worse.
-- Evals are **not in CI**: they call real models, which cost money and give slightly different answers each run. A person runs them on purpose.
+Real examples with expected answers in `orders-api/evals/`. Run `npm run eval` before and after changing a prompt or model. Not in CI: it costs money.
 
 ## Checklist for a new AI feature
 
-1. Is AI the right tool here? ([ai-in-products.md](ai-in-products.md))
-2. Is there a deterministic fallback, and is the source marked on the result?
-3. Is every call recorded, budgeted, and behind a kill switch?
-4. Is outside text wrapped, and the output validated?
-5. Are there tests for: bad output, timeout, budget used up, kill switch, and a prompt-injection attempt?
-6. Is there an eval file?
+1. Is AI the right tool? ([ai-in-products.md](ai-in-products.md))
+2. Deterministic fallback, with the source marked on the result?
+3. Every call recorded, budgeted, behind a kill switch, on its own key?
+4. Outside text wrapped, output validated, writes proposed not made?
+5. Tests for bad output, timeout, budget used up, kill switch, prompt injection?
+6. An eval file?

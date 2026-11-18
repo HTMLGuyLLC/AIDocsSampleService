@@ -1,0 +1,6 @@
+{
+  "name": "crumb-dev",
+  "version": "1.0.0",
+  "description": "Crumb & Co. developer skills. Example of packaging an org skill as a plugin.",
+  "author": { "name": "Crumb & Co." }
+}

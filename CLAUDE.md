@@ -2,7 +2,7 @@
 
 ## Claude Code only
 
-- Org-wide skills are in `.claude/skills/`: `ticket-ready-check`, `ticket-to-pr`, `update-docs`, `add-endpoint`, `pos-lookup`, `release-notes`, `audit-loop`, `debug-with-evidence`. Use them instead of improvising the same workflow.
+- Org-wide skills are in `.claude/skills/`: `ticket-ready-check`, `ticket-to-pr`, `update-docs`, `add-endpoint`, `pos-lookup`, `release-notes`, `audit-loop`, `pr-feedback-loop`, `debug-with-evidence`, `post-deploy-check`. Use them instead of improvising the same workflow.
 - Each project may add its own skills in its own `.claude/skills/`. Project skills win when names clash.
 - Models: start on Opus at low effort. For simple, mechanical work, hand it to a Sonnet or Haiku subagent, then check the result yourself. Details: `docs/model-selection.md`.
 - Connectors (GitHub, Jira, Dynatrace) are set up in `.mcp.json`. Prefer them over asking a person to paste things in. Read `docs/connectors.md`.
